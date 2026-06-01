@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>American English Pronunciation Practice</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 24px;
+        }
+        .exercise-selector {
+            margin-bottom: 20px;
+        }
+        select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            font-size: 16px;
+        }
+        .target-box {
+            background: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 20px;
+        }
+        .controls {
+            text-align: center;
+        }
+        button {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.4);
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+        button.listening {
+            background-color: #ef4444;
+            animation: pulse 1.5s infinite;
+        }
+        .result-box {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        .score {
+            font-size: 28px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .spoken-text {
+            font-style: italic;
+            color: #475569;
+            text-align: center;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .feedback-good { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .feedback-average { background-color: #fef08a; color: #854d0e; border: 1px solid #fde047; }
+        .feedback-poor { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>American English Pronunciation</h1>
+    
+    <div class="exercise-selector">
+        <label for="lesson">Chọn bài tập:</label>
+        <select id="lesson" onchange="changeLesson()">
+            <option value="Effective communication is essential for a good teacher.">Bài 1: Giao tiếp sư phạm</option>
+            <option value="I prefer to use interactive methods in the classroom.">Bài 2: Phương pháp giảng dạy</option>
+            <option value="The quick brown fox jumps over the lazy dog.">Bài 3: Luyện phát âm toàn diện (Pangram)</option>
+        </select>
+    </div>
+
+    <div class="target-box" id="targetText">
+        Effective communication is essential for a good teacher.
+    </div>
+
+    <div class="controls">
+        <button id="micBtn" onclick="startSpeaking()">🎤 Bắt đầu đọc</button>
+        <p id="statusText" style="font-size: 14px; color: #64748b; margin-top: 10px;">Nhấn nút và cho phép micro để bắt đầu.</p>
+    </div>
+
+    <div id="resultArea" class="result-box">
+        <div class="score" id="scoreDisplay">0%</div>
+        <div class="spoken-text" id="spokenDisplay"></div>
+        <p style="text-align: center; margin-top: 10px; font-weight: bold;" id="feedbackText"></p>
+    </div>
+</div>
+
+<script>
+    // Kiểm tra xem trình duyệt có hỗ trợ Web Speech API không
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.lang = 'en-US'; // Thiết lập chuẩn tiếng Anh Mỹ
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+    } else {
+        alert("Trình duyệt của bạn không hỗ trợ Web Speech API. Vui lòng sử dụng Google Chrome.");
+    }
+
+    const targetElement = document.getElementById('targetText');
+    const micBtn = document.getElementById('micBtn');
+    const statusText = document.getElementById('statusText');
+    const resultArea = document.getElementById('resultArea');
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const spokenDisplay = document.getElementById('spokenDisplay');
+    const feedbackText = document.getElementById('feedbackText');
+
+    function changeLesson() {
+        const lessonSelect = document.getElementById('lesson');
+        targetElement.innerText = lessonSelect.value;
+        resultArea.style.display = 'none'; // Ẩn kết quả cũ khi đổi bài
+    }
+
+    function startSpeaking() {
+        if (!recognition) return;
+
+        recognition.start();
+        micBtn.classList.add('listening');
+        micBtn.innerText = "Listening...";
+        statusText.innerText = "Đang nghe... Hãy đọc to câu trên.";
+        resultArea.style.display = 'none';
+
+        recognition.onspeechend = function() {
+            recognition.stop();
+            micBtn.classList.remove('listening');
+            micBtn.innerText = "🎤 Bắt đầu đọc";
+            statusText.innerText = "Đang xử lý dữ liệu...";
+        }
+
+        recognition.onresult = function(event) {
+            const spokenSentence = event.results[0][0].transcript;
+            const targetSentence = targetElement.innerText;
+            evaluatePronunciation(targetSentence, spokenSentence);
+        }
+
+        recognition.onerror = function(event) {
+            micBtn.classList.remove('listening');
+            micBtn.innerText = "🎤 Bắt đầu đọc";
+            statusText.innerText = "Lỗi micro: " + event.error;
+        }
+    }
+
+    function evaluatePronunciation(target, spoken) {
+        // Chuẩn hóa chuỗi: in thường và loại bỏ dấu câu để so sánh độ chính xác của từ
+        const cleanTarget = target.toLowerCase().replace(/[.,!?]/g, '').split(' ');
+        const cleanSpoken = spoken.toLowerCase().replace(/[.,!?]/g, '').split(' ');
+
+        let matchCount = 0;
+        
+        cleanTarget.forEach(word => {
+            if (cleanSpoken.includes(word)) {
+                matchCount++;
+                // Xóa từ đã khớp để tránh tính trùng lặp nếu đọc lặp từ
+                const index = cleanSpoken.indexOf(word);
+                cleanSpoken.splice(index, 1);
+            }
+        });
+
+        const score = Math.round((matchCount / cleanTarget.length) * 100);
+        
+        displayResults(score, spoken);
+    }
+
+    function displayResults(score, spoken) {
+        resultArea.style.display = 'block';
+        scoreDisplay.innerText = `Độ chính xác: ${score}%`;
+        spokenDisplay.innerText = `Hệ thống nghe được: "${spoken}"`;
+        statusText.innerText = "Hoàn tất!";
+
+        resultArea.className = 'result-box'; // Reset classes
+
+        if (score >= 90) {
+            resultArea.classList.add('feedback-good');
+            feedbackText.innerText = "Tuyệt vời! Bạn phát âm rất rõ ràng và chuẩn xác.";
+        } else if (score >= 60) {
+            resultArea.classList.add('feedback-average');
+            feedbackText.innerText = "Khá tốt! Tuy nhiên hệ thống chưa nghe rõ vài từ, hãy chú ý phát âm rõ âm cuối (ending sounds).";
+        } else {
+            resultArea.classList.add('feedback-poor');
+            feedbackText.innerText = "Cần cố gắng hơn. Hãy thử đọc chậm lại và nhấn trọng âm rõ ràng nhé.";
+        }
+    }
+</script>
+
+</body>
+</html>
